@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>논문 노트: 딥 어텐션 기반 SMOTE 데이터 증강 (DA-SMOTE-ED)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>목차</h2>
+        <ul>
+            <li><a href="#1-연구-배경">1. 연구 배경</a></li>
+            <li><a href="#2-기존-방법의-한계">2. 기존 방법의 한계</a></li>
+            <li>
+                <a href="#3-da-smote-ed-방법-원리">3. DA-SMOTE-ED 방법 원리</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-클러스터링-기반-언더샘플링">3.1 클러스터링 기반 메커니즘</a></li>
+                    <li><a href="#32-특징-공간-분리">3.2 특징 공간 분리 (Decoupling)</a></li>
+                    <li><a href="#33-적응형-보간-생성">3.3 적응형 보간 생성</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-결론">4. 결론</a></li>
+            <li><a href="#문헌-출처">문헌 출처</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>논문 노트: 딥 어텐션 기반 SMOTE 데이터 증강 방법 (DA-SMOTE-ED)</h1>
+
+        <blockquote>
+            <p>가스터빈 불균형 이상 탐지에서 클래스 간 중첩으로 인한 보간 노이즈 문제 해결.</p>
+            <p><strong>Paper Title:</strong> Deep attention SMOTE: Data augmentation with a learnable interpolation factor for imbalanced anomaly detection of gas turbines</p>
+            <p><strong>Journal:</strong> <em>Computers in Industry</em> (Elsevier), Vol. 151, 2023</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.compind.2023.103972">10.1016/j.compind.2023.103972</a></p>
+        </blockquote>
+
+        <p>
+            <img src="https://img.shields.io/badge/DOI-10.1016%2Fj.compind.2023.103972-blue" alt="DOI"> 
+            <img src="https://img.shields.io/badge/Status-Published-brightgreen" alt="Status"> 
+            <img src="https://img.shields.io/badge/Topic-Anomaly_Detection-orange" alt="Topic"> 
+            <img src="https://img.shields.io/badge/Method-Data_Augmentation-lightgrey" alt="Method">
+        </p>
+
+        <hr>
+
+        <h2 id="1-연구-배경">1. 연구 배경</h2>
+        <p>가스터빈과 같은 산업 장비의 상태 모니터링에서 실제 수집되는 데이터는 두 가지 과제에 직면해 있습니다:</p>
+        <ol>
+            <li><strong>극심한 데이터 불균형</strong>: 정상 데이터가 대부분이며 이상 상태 데이터는 매우 희소하여 모델 학습에 편향을 일으킵니다.</li>
+            <li><strong>클래스 간 중첩 (Inter-class overlap)</strong>: 초기 이상 상태는 정상 상태와 물리적 특징이 매우 유사하여 특징 공간에서 혼재된 영역이 발생합니다.</li>
+        </ol>
+
+        <h2 id="2-기존-방법의-한계">2. 기존 데이터 증강 방법의 한계</h2>
+        <p>기존 SMOTE 방식은 근접 샘플 간에 무작위로 보간하여 새 샘플을 생성합니다. '클래스 간 중첩'이 있는 경우, 이러한 무작위성은 합성 샘플이 정상 샘플 영역(위험 지역)에 생성되게 하여 잘못된 라벨 노이즈를 유발하고 분류기 학습을 방해합니다.</p>
+
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/ddb83eef-4957-456d-8805-bcef47bf7752" width="50%" />
+          <p><em>그림 1 기존 리샘플링과 제안된 하이브리드 리샘플링의 데이터 분포 비교</em></p>
+        </div>
+
+        <h2 id="3-da-smote-ed-방법-원리">3. DA-SMOTE-ED 방법 원리</h2>
+        <p>본 논문은 세 가지 핵심 모듈로 구성된 하이브리드 리샘플링 프레임워크를 제안합니다:</p>
+
+        <h3 id="31-클러스터링-기반-언더샘플링">3.1 클러스터링 기반 언더샘플링</h3>
+        <p>K-Means 알고리즘으로 정상 샘플을 클러스터링하고 중심점만 유지합니다. 이를 통해 정보 손실을 최소화하면서 불균형을 완화하고 전역적인 분포 정보를 보존합니다.</p>
+
+        <h3 id="32-특징-공간-분리">3.2 인코더-디코더 기반 특징 공간 분리</h3>
+        <p>자가 주의 메커니즘 기반의 Transformer 인코더-디코더 네트워크 도입:</p>
+        <ul>
+            <li><strong>기능</strong>: 원본 데이터를 분별력이 높은 특징 공간으로 매핑.</li>
+            <li><strong>Triplet-Center loss</strong>: 동일 클래스는 가깝게, 타 클래스는 멀게 학습시켜 합성 샘플이 '위험 지역'에 생성될 확률을 낮춥니다.</li>
+        </ul>
+
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/bdeee3b0-8279-42ba-ac0e-282c782afb3e" width="50%" />
+          <p><em>그림 2 특징 공간에서의 Triplet-Center loss 효과 모식도</em></p>
+        </div>
+
+        <h3 id="33-적응형-보간-생성">3.3 딥 어텐션 가이드 기반 적응형 보간 생성</h3>
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/f95e3cd3-56fc-494f-ad7a-b5adb345ae7d" width="50%" />
+          <p><em>그림 3 DA-SMOTE-ED의 네트워크 아키텍처 및 어텐션 모듈</em></p>
+        </div>
+        <p>어텐션 네트워크가 보간 계수를 자동 학습:</p>
+        <ul>
+            <li><strong>적응형 보간</strong>: 데이터 분포에 따라 새 샘플이 정상 클러스터 중심에서 멀어지도록 동적으로 유도합니다.</li>
+            <li><strong>재구성</strong>: 생성된 고품질 샘플을 디코더를 통해 원본 공간으로 복원하여 최종 균형 데이터셋을 형성합니다.</li>
+        </ul>
+
+        <h2 id="4-결론">4. 결론</h2>
+        <p>실제 가스터빈 및 항공 엔진 데이터 세트 테스트 결과:</p>
+        <ul>
+            <li><strong>진단 정확도</strong>: 실제 데이터에서 91.77%의 평균 균형 정확도를 달성하여 기존 알고리즘보다 우수한 성능을 보였습니다.</li>
+            <li><strong>높은 검출률</strong>: 이상 검출률(TPR)이 89.59%에 달해 GAN 등 생성 모델보다 뛰어난 결과를 입증했습니다.</li>
+        </ul>
+
+        <hr>
+        <h2 id="문헌-출처">문헌 출처</h2>
+        <p><strong>Paper Title:</strong> Deep attention SMOTE: Data augmentation with a learnable interpolation factor for imbalanced anomaly detection of gas turbines</p>
+        <p><strong>Journal:</strong> <em>Computers in Industry</em> (Elsevier), Vol. 151, 2023</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.compind.2023.103972">10.1016/j.compind.2023.103972</a></p>
+
+    </main>
+
+</body>
+</html>

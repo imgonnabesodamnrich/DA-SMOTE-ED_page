@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Note: Deep Attention SMOTE (DA-SMOTE-ED)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+    
+    <script>
+        MathJax = { tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] } };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; display: flex; min-height: 100vh; background-color: #fff; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; }
+        .sidebar { width: 280px; background-color: #f6f8fa; border-right: 1px solid #d0d7de; position: fixed; height: 100vh; overflow-y: auto; padding: 24px; box-sizing: border-box; top: 0; left: 0; z-index: 100; }
+        .sidebar h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #24292f; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { text-decoration: none; color: #57606a; font-size: 14px; display: block; padding: 4px 0; transition: color 0.2s; }
+        .sidebar a:hover { color: #0969da; text-decoration: underline; }
+        .sidebar .sub-menu { margin-left: 20px; margin-top: 4px; font-size: 13px; }
+        .main-content { margin-left: 280px; flex: 1; padding: 40px 60px; max-width: 1000px; }
+        html { scroll-behavior: smooth; }
+        div[align="center"] { text-align: center; margin: 20px 0; }
+        @media (max-width: 900px) {
+            body { display: block; }
+            .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #d0d7de; }
+            .main-content { margin-left: 0; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>Contents</h2>
+        <ul>
+            <li><a href="#1-research-background">1. Research Background</a></li>
+            <li><a href="#2-limitations-of-traditional-methods">2. Limitations of Traditional Methods</a></li>
+            <li>
+                <a href="#3-methodology-da-smote-ed">3. Methodology: DA-SMOTE-ED</a>
+                <ul class="sub-menu">
+                    <li><a href="#31-cluster-based-undersampling">3.1 Cluster-based Undersampling</a></li>
+                    <li><a href="#32-encoder-decoder-feature-decoupling">3.2 Feature Space Decoupling</a></li>
+                    <li><a href="#33-attention-guided-interpolation">3.3 Attention-guided Interpolation</a></li>
+                </ul>
+            </li>
+            <li><a href="#4-conclusion">4. Conclusion</a></li>
+            <li><a href="#literature-source">Literature Source</a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content markdown-body">
+        
+        <h1>Paper Note: Deep Attention SMOTE Data Augmentation (DA-SMOTE-ED)</h1>
+
+        <blockquote>
+            <p>Addressing interpolation noise caused by inter-class overlap in imbalanced anomaly detection of gas turbines.</p>
+            <p><strong>Paper Title:</strong> Deep attention SMOTE: Data augmentation with a learnable interpolation factor for imbalanced anomaly detection of gas turbines</p>
+            <p><strong>Journal:</strong> <em>Computers in Industry</em> (Elsevier), Vol. 151, 2023</p>
+            <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.compind.2023.103972">10.1016/j.compind.2023.103972</a></p>
+        </blockquote>
+
+        <p>
+            <img src="https://img.shields.io/badge/DOI-10.1016%2Fj.compind.2023.103972-blue" alt="DOI"> 
+            <img src="https://img.shields.io/badge/Status-Published-brightgreen" alt="Status"> 
+            <img src="https://img.shields.io/badge/Topic-Anomaly_Detection-orange" alt="Topic"> 
+            <img src="https://img.shields.io/badge/Method-Data_Augmentation-lightgrey" alt="Method">
+        </p>
+
+        <hr>
+
+        <h2 id="1-research-background">1. Research Background</h2>
+        <p>In health monitoring of industrial equipment like gas turbines, real-world data faces two significant challenges:</p>
+        <ol>
+            <li><strong>Extreme Data Imbalance</strong>: Normal operation data dominates, while anomaly data is extremely scarce. Direct training results in biased models.</li>
+            <li><strong>Inter-class Overlap</strong>: Slight anomalies share similar physical features with normal states, leading to mixed regions in the feature space.</li>
+        </ol>
+
+        <h2 id="2-limitations-of-traditional-methods">2. Limitations of Traditional Data Augmentation</h2>
+        <p>Traditional SMOTE generates new samples via random interpolation between neighbors. With "inter-class overlap," this randomness easily creates synthetic samples in "danger zones" occupied by normal data, producing mislabeled noise that misleads the classifier.</p>
+
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/ddb83eef-4957-456d-8805-bcef47bf7752" width="50%" />
+          <p><em>Fig 1. Data distribution comparison between traditional and proposed hybrid resampling methods.</em></p>
+        </div>
+
+        <h2 id="3-methodology-da-smote-ed">3. Methodology: DA-SMOTE-ED</h2>
+        <p>The paper proposes a hybrid resampling framework (DA-SMOTE-ED) consisting of three core modules:</p>
+
+        <h3 id="31-cluster-based-undersampling">3.1 Cluster-based Undersampling Mechanism</h3>
+        <p>The method uses K-Means clustering on normal samples. By keeping cluster centers to represent normal data, it alleviates imbalance while preserving the global distribution, avoiding information loss from random deletion.</p>
+
+        <h3 id="32-encoder-decoder-feature-decoupling">3.2 Encoder-Decoder based Feature Space Decoupling</h3>
+        <p>A Transformer-based Encoder-Decoder network with self-attention is introduced:</p>
+        <ul>
+            <li><strong>Function</strong>: Maps raw data into a highly separable feature space.</li>
+            <li><strong>Triplet-Center loss</strong>: Pulls same-class samples together and pushes different classes apart, reducing the risk of samples falling into "danger zones."</li>
+        </ul>
+
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/bdeee3b0-8279-42ba-ac0e-282c782afb3e" width="50%" />
+          <p><em>Fig 2. Schematic of Triplet-Center loss in the feature space.</em></p>
+        </div>
+
+        <h3 id="33-attention-guided-interpolation">3.3 Deep Attention-guided Adaptive Interpolation</h3>
+        <div align="center">
+          <img src="https://github.com/user-attachments/assets/f95e3cd3-56fc-494f-ad7a-b5adb345ae7d" width="50%" />
+          <p><em>Fig 3. Network architecture and core attention module of DA-SMOTE-ED.</em></p>
+        </div>
+        <p>The DA-SMOTE module uses an attention network to learn the interpolation factor:</p>
+        <ul>
+            <li><strong>Adaptive Interpolation</strong>: Automatically guides synthetic samples to stay away from the normal cluster center.</li>
+            <li><strong>Reconstruction</strong>: High-quality features are mapped back to the original space via the Decoder.</li>
+        </ul>
+
+        <h2 id="4-conclusion">4. Conclusion</h2>
+        <p>Tests on gas turbine and aero-engine datasets demonstrate:</p>
+        <ul>
+            <li><strong>Diagnostic Accuracy</strong>: Achieved 91.77% Balanced Accuracy on real datasets, outperforming baseline algorithms.</li>
+            <li><strong>High TPR</strong>: Anomaly True Positive Rate reached 89.59%, significantly better than GAN-based models.</li>
+        </ul>
+
+        <hr>
+        <h2 id="literature-source">Literature Source</h2>
+        <p><strong>Paper Title:</strong> Deep attention SMOTE: Data augmentation with a learnable interpolation factor for imbalanced anomaly detection of gas turbines</p>
+        <p><strong>Journal:</strong> <em>Computers in Industry</em> (Elsevier), Vol. 151, 2023</p>
+        <p><strong>DOI:</strong> <a href="https://doi.org/10.1016/j.compind.2023.103972">10.1016/j.compind.2023.103972</a></p>
+
+    </main>
+
+</body>
+</html>
